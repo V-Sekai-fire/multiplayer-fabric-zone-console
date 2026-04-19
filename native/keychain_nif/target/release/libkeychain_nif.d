@@ -1,0 +1,1 @@
+/Users/ernest.lee/Desktop/godot/modules/multiplayer_fabric_mmog/tools/zone_console/native/keychain_nif/target/release/libkeychain_nif.dylib: /Users/ernest.lee/Desktop/godot/modules/multiplayer_fabric_mmog/tools/zone_console/native/keychain_nif/src/lib.rs
