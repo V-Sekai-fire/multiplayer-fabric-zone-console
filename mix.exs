@@ -22,7 +22,7 @@ defmodule ZoneConsole.MixProject do
       {:ex_ratatui, "~> 0.1"},
       {:req, "~> 0.5"},
       {:jason, "~> 1.4"},
-      {:wtransport, path: "vendor/wtransport_elixir"},
+      {:wtransport, github: "V-Sekai-fire/multiplayer-fabric-webtransport"},
       {:propcheck, "~> 1.4", only: [:test, :dev], runtime: false},
       {:aria_storage, github: "V-Sekai-fire/aria-storage"}
     ]
