@@ -27,7 +27,9 @@ command dispatch.
 - **NIF boundary safety.** The WebTransport Rust NIF must handle all
   error conditions and return `{:error, reason}` atoms; it must never
   panic.  A NIF panic crashes the BEAM VM.
-- **Commit every green.** One commit per feature cycle.
+- **Commit every green.** One commit per feature cycle.  Messages use
+  sentence case; do not use Conventional Commits prefixes (`feat:`,
+  `fix:`, `chore:`, etc.).
 
 ## Workflow
 
