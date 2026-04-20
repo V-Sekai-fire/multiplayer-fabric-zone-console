@@ -1,12 +1,13 @@
 defmodule ZoneConsole.UroClient do
   @moduledoc "Thin REST client for Uro auth + shard management."
 
-  defstruct [:base_url, :access_token, :user]
+  defstruct [:base_url, :access_token, :user, expires_in: 3600]
 
   @type t :: %__MODULE__{
           base_url: String.t(),
           access_token: String.t() | nil,
-          user: map() | nil
+          user: map() | nil,
+          expires_in: non_neg_integer()
         }
 
   def new(base_url), do: %__MODULE__{base_url: String.trim_trailing(base_url, "/")}
@@ -20,7 +21,11 @@ defmodule ZoneConsole.UroClient do
            receive_timeout: 10_000
          ) do
       {:ok, %{status: 200, body: %{"data" => data}}} ->
-        {:ok, %{client | access_token: data["access_token"], user: data["user"]}}
+        {:ok, %{client |
+          access_token: data["access_token"],
+          user: data["user"],
+          expires_in: data["expires_in"] || 3600
+        }}
 
       {:ok, %{status: status, body: body}} ->
         {:error, "HTTP #{status}: #{inspect(body)}"}
@@ -192,6 +197,24 @@ defmodule ZoneConsole.UroClient do
 
       {:error, reason} ->
         {:error, "AriaStorage error: #{inspect(reason)}"}
+    end
+  end
+
+  @doc "POST /session/cert — register client cert hash with uro. Hash validity is tied to the OAuth token TTL. Returns :ok or {:error, reason}."
+  def register_cert(%__MODULE__{} = client, cert_hash) do
+    case Req.post("#{client.base_url}/session/cert",
+           json: %{cert_hash: cert_hash},
+           headers: auth_headers(client),
+           receive_timeout: 10_000
+         ) do
+      {:ok, %{status: 200}} ->
+        :ok
+
+      {:ok, %{status: status, body: body}} ->
+        {:error, "HTTP #{status}: #{inspect(body)}"}
+
+      {:error, reason} ->
+        {:error, inspect(reason)}
     end
   end
 
