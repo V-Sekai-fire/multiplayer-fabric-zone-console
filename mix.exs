@@ -8,7 +8,8 @@ defmodule ZoneConsole.MixProject do
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      escript: [main_module: ZoneConsole.CLI]
+      escript: [main_module: ZoneConsole.CLI],
+      aliases: aliases()
     ]
   end
 
@@ -22,7 +23,15 @@ defmodule ZoneConsole.MixProject do
       {:req, "~> 0.5"},
       {:jason, "~> 1.4"},
       {:wtransport, path: "vendor/wtransport_elixir"},
-      {:propcheck, "~> 1.4", only: [:test, :dev], runtime: false}
+      {:propcheck, "~> 1.4", only: [:test, :dev], runtime: false},
+      {:aria_storage, github: "V-Sekai-fire/aria-storage"}
+    ]
+  end
+
+  defp aliases do
+    [
+      dev: ["compile --warnings-as-errors"],
+      test: ["compile", "test"]
     ]
   end
 end

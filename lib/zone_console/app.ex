@@ -30,6 +30,8 @@ defmodule ZoneConsole.App do
     {"tombstone <hash>", "blacklist UGC asset; despawn instances"},
     {"rip <x> <z> <strength>", "inject rip current into flow field"},
     {"bloom <x> <z>", "trigger jellyfish bloom event"},
+    {"upload <path>", "upload a scene asset to Uro storage"},
+    {"instance <id> <x> <y> <z>", "instance an uploaded asset in the zone"},
     {"exit / quit / Ctrl-C", "disconnect and exit"}
   ]
 
@@ -525,6 +527,41 @@ defmodule ZoneConsole.App do
 
       _ ->
         append(state, line(:err, "usage: kick <integer_id>"))
+    end
+  end
+
+  defp run_command(state, "upload " <> path) do
+    path = String.trim(path)
+    name = Path.basename(path)
+
+    case UroClient.upload_asset(state.uro, path, name) do
+      {:ok, id} ->
+        append(state, line(:ok, "Uploaded #{name} as #{id}"))
+
+      {:error, reason} ->
+        append(state, line(:err, "Upload failed: #{reason}"))
+    end
+  end
+
+  defp run_command(state, "instance " <> args) do
+    case String.split(String.trim(args)) do
+      [id_str, x_str, y_str, z_str] ->
+        with {id, ""} <- Integer.parse(id_str),
+             {x, ""} <- Float.parse(x_str),
+             {y, ""} <- Float.parse(y_str),
+             {z, ""} <- Float.parse(z_str) do
+          if state.zone_client do
+            ZoneClient.send_instance(state.zone_client, id, x, y, z)
+            append(state, line(:ok, "Instance request sent for asset #{id} at (#{x}, #{y}, #{z})"))
+          else
+            append(state, line(:warn, "Not joined to a zone. Run 'join' first."))
+          end
+        else
+          _ -> append(state, line(:err, "usage: instance <asset_id> <x> <y> <z>  (int, floats)"))
+        end
+
+      _ ->
+        append(state, line(:err, "usage: instance <asset_id> <x> <y> <z>"))
     end
   end
 

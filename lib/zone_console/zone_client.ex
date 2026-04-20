@@ -27,6 +27,9 @@ defmodule ZoneConsole.ZoneClient do
   @spec send_nudge(pid(), non_neg_integer()) :: :ok
   def send_nudge(pid, target_id), do: GenServer.cast(pid, {:nudge, target_id})
 
+  @spec send_instance(pid(), non_neg_integer(), float(), float(), float()) :: :ok
+  def send_instance(pid, asset_id, x, y, z), do: GenServer.cast(pid, {:instance, asset_id, x, y, z})
+
   @spec stop(pid()) :: :ok
   def stop(pid), do: GenServer.stop(pid, :normal)
 
@@ -89,6 +92,26 @@ defmodule ZoneConsole.ZoneClient do
     {x, y, z} = state.pos
     # CMD_NUDGE = 2, payload[0] low byte = 2, payload[1] = target_id
     packet = encode_player(state.player_id, x, y, z, 2, target_id)
+    datagram = wtd_encode(@ch_player_flag, packet)
+    Client.send_datagram(state.client, datagram)
+    {:noreply, state}
+  end
+
+  def handle_cast({:instance, asset_id, x, y, z}, state) do
+    # CMD_INSTANCE_ASSET = 4
+    # Split 64-bit asset_id into two 32-bit parts (high and low)
+    id_hi = Bitwise.bsr(asset_id, 32)
+    id_lo = Bitwise.band(asset_id, 0xFFFFFFFF)
+    # Bit-cast floats to u32
+    x_u32 = :binary.decode_unsigned(:binary.encode_float(x, :little), :little)
+    y_u32 = :binary.decode_unsigned(:binary.encode_float(y, :little), :little)
+    z_u32 = :binary.decode_unsigned(:binary.encode_float(z, :little), :little)
+    # CMD_INSTANCE_ASSET = 4, encoded as low byte of payload[0]
+    # payload[1] = asset_id high, payload[2] = asset_id low, payload[3-5] = position
+    cmd_word = 4 ||| id_hi <<< 8
+    payload_tail = <<id_lo::little-32, x_u32::little-32, y_u32::little-32, z_u32::little-32, 0::96>>
+    {px, py, pz} = state.pos
+    packet = encode_player(state.player_id, px, py, pz, 4, id_hi) <> payload_tail
     datagram = wtd_encode(@ch_player_flag, packet)
     Client.send_datagram(state.client, datagram)
     {:noreply, state}

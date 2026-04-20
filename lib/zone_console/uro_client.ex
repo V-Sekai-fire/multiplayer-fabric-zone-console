@@ -171,6 +171,47 @@ defmodule ZoneConsole.UroClient do
     end
   end
 
+  @doc "POST /storage - upload a processed asset to Uro storage. Returns {:ok, id} or {:error, reason}."
+  def upload_asset(%__MODULE__{} = client, path, name) do
+    case AriaStorage.process_file(path, backend: :s3) do
+      {:ok, %{chunks: chunks, store_url: store_url}} ->
+        case Req.post("#{client.base_url}/storage",
+               json: %{name: name, chunks: chunks, store_url: store_url},
+               headers: auth_headers(client),
+               receive_timeout: 10_000
+             ) do
+          {:ok, %{status: 200, body: %{"data" => %{"id" => id}}}} ->
+            {:ok, id}
+
+          {:ok, %{status: status, body: body}} ->
+            {:error, "HTTP #{status}: #{inspect(body)}"}
+
+          {:error, reason} ->
+            {:error, inspect(reason)}
+        end
+
+      {:error, reason} ->
+        {:error, "AriaStorage error: #{inspect(reason)}"}
+    end
+  end
+
+  @doc "POST /storage/:id/manifest - fetch a manifest for an uploaded asset. Returns {:ok, %{store_url: _, chunks: [_|_]}} or {:error, reason}."
+  def get_manifest(%__MODULE__{} = client, id) do
+    case Req.post("#{client.base_url}/storage/#{id}/manifest",
+           headers: auth_headers(client),
+           receive_timeout: 10_000
+         ) do
+      {:ok, %{status: 200, body: %{"data" => data}}} ->
+        {:ok, data}
+
+      {:ok, %{status: status, body: body}} ->
+        {:error, "HTTP #{status}: #{inspect(body)}"}
+
+      {:error, reason} ->
+        {:error, inspect(reason)}
+    end
+  end
+
   defp auth_headers(%__MODULE__{access_token: nil}), do: []
   defp auth_headers(%__MODULE__{access_token: tok}), do: [{"authorization", "Bearer #{tok}"}]
 end
