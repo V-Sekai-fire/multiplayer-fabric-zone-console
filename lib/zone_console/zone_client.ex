@@ -98,20 +98,8 @@ defmodule ZoneConsole.ZoneClient do
   end
 
   def handle_cast({:instance, asset_id, x, y, z}, state) do
-    # CMD_INSTANCE_ASSET = 4
-    # Split 64-bit asset_id into two 32-bit parts (high and low)
-    id_hi = Bitwise.bsr(asset_id, 32)
-    id_lo = Bitwise.band(asset_id, 0xFFFFFFFF)
-    # Bit-cast f64 → f32 → u32 via binary pattern match
-    <<x_u32::little-32>> = <<x::little-float-32>>
-    <<y_u32::little-32>> = <<y::little-float-32>>
-    <<z_u32::little-32>> = <<z::little-float-32>>
-    # CMD_INSTANCE_ASSET = 4, encoded as low byte of payload[0]
-    # payload[1] = asset_id high, payload[2] = asset_id low, payload[3-5] = position
-    cmd_word = 4
-    payload_tail = <<id_hi::little-32, id_lo::little-32, x_u32::little-32, y_u32::little-32, z_u32::little-32, 0::192>>
     {px, py, pz} = state.pos
-    packet = encode_player(state.player_id, px, py, pz, cmd_word) <> payload_tail
+    packet = encode_instance(state.player_id, px, py, pz, asset_id, x, y, z)
     datagram = wtd_encode(@ch_player_flag, packet)
     Client.send_datagram(state.client, datagram)
     {:noreply, state}
@@ -169,6 +157,25 @@ defmodule ZoneConsole.ZoneClient do
   end
 
   defp decode_entries(_, acc), do: acc
+
+  # Build 100-byte CMD_INSTANCE_ASSET packet.
+  # player_id, sx/sy/sz = sender position, asset_id = 64-bit id,
+  # tx/ty/tz = target position (stored as f32).
+  defp encode_instance(player_id, sx, sy, sz, asset_id, tx, ty, tz) do
+    id_hi = bsr(asset_id, 32)
+    id_lo = band(asset_id, 0xFFFFFFFF)
+    <<xu::little-32>> = <<tx::little-float-32>>
+    <<yu::little-32>> = <<ty::little-float-32>>
+    <<zu::little-32>> = <<tz::little-float-32>>
+    <<player_id::little-32,
+      sx::little-float-64, sy::little-float-64, sz::little-float-64,
+      0::little-16, 0::little-16, 0::little-16,
+      0::little-16, 0::little-16, 0::little-16,
+      0::little-32,
+      4::little-32, id_hi::little-32, id_lo::little-32,
+      xu::little-32, yu::little-32, zu::little-32,
+      0::256>>
+  end
 
   # Build 100-byte player packet. cmd is payload[0] low byte (0=heartbeat, 2=nudge).
   defp encode_player(player_id, x, y, z, cmd, target_id \\ 0) do
