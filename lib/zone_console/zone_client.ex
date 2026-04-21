@@ -102,16 +102,16 @@ defmodule ZoneConsole.ZoneClient do
     # Split 64-bit asset_id into two 32-bit parts (high and low)
     id_hi = Bitwise.bsr(asset_id, 32)
     id_lo = Bitwise.band(asset_id, 0xFFFFFFFF)
-    # Bit-cast floats to u32
-    x_u32 = :binary.decode_unsigned(:binary.encode_float(x, :little), :little)
-    y_u32 = :binary.decode_unsigned(:binary.encode_float(y, :little), :little)
-    z_u32 = :binary.decode_unsigned(:binary.encode_float(z, :little), :little)
+    # Bit-cast f64 → f32 → u32 via binary pattern match
+    <<x_u32::little-32>> = <<x::little-float-32>>
+    <<y_u32::little-32>> = <<y::little-float-32>>
+    <<z_u32::little-32>> = <<z::little-float-32>>
     # CMD_INSTANCE_ASSET = 4, encoded as low byte of payload[0]
     # payload[1] = asset_id high, payload[2] = asset_id low, payload[3-5] = position
-    cmd_word = 4 ||| id_hi <<< 8
-    payload_tail = <<id_lo::little-32, x_u32::little-32, y_u32::little-32, z_u32::little-32, 0::96>>
+    cmd_word = 4
+    payload_tail = <<id_hi::little-32, id_lo::little-32, x_u32::little-32, y_u32::little-32, z_u32::little-32, 0::192>>
     {px, py, pz} = state.pos
-    packet = encode_player(state.player_id, px, py, pz, 4, id_hi) <> payload_tail
+    packet = encode_player(state.player_id, px, py, pz, cmd_word) <> payload_tail
     datagram = wtd_encode(@ch_player_flag, packet)
     Client.send_datagram(state.client, datagram)
     {:noreply, state}

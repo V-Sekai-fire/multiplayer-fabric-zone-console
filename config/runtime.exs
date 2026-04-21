@@ -1,3 +1,5 @@
+import Config
+
 config :aria_storage,
   storage_backend: :s3,
   s3_bucket: System.get_env("AWS_S3_BUCKET", "uro-uploads"),
