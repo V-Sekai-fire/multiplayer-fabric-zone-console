@@ -12,12 +12,13 @@ defmodule ZoneConsole.UroClientBakeTest do
   end
 
   @tag :prod
-  test "uploaded asset manifest includes baked_url after baker completes" do
+  test "uploaded asset manifest has .caidx baked_url after baker completes" do
     client     = authed_client()
     scene_path = System.fetch_env!("TEST_SCENE_PATH")
     {:ok, id}  = ZoneConsole.UroClient.upload_asset(client, scene_path,
       Path.basename(scene_path))
 
+    # Baker is async — poll up to 30 s for baked_url to appear
     baked_url =
       Enum.find_value(1..30, fn _ ->
         {:ok, m} = ZoneConsole.UroClient.get_manifest(client, id)
@@ -26,6 +27,8 @@ defmodule ZoneConsole.UroClientBakeTest do
       end)
 
     assert is_binary(baked_url), "manifest must have baked_url within 30 s"
+    assert String.ends_with?(baked_url, ".caidx"),
+           "baked_url must point to a casync .caidx index, got: #{baked_url}"
     assert String.contains?(baked_url, "versitygw") or
            String.contains?(baked_url, "localhost") or
            String.contains?(baked_url, "7070"),
