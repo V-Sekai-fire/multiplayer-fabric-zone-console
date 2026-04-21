@@ -4,3 +4,4 @@ mix.lock
 /zone_console
 .env
 vendor/*/native/*/target/
+native/*/target/
