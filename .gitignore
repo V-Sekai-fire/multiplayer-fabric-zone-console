@@ -5,3 +5,4 @@ mix.lock
 .env
 vendor/*/native/*/target/
 native/*/target/
+priv/native/
