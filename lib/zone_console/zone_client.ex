@@ -28,7 +28,8 @@ defmodule ZoneConsole.ZoneClient do
   def send_nudge(pid, target_id), do: GenServer.cast(pid, {:nudge, target_id})
 
   @spec send_instance(pid(), non_neg_integer(), float(), float(), float()) :: :ok
-  def send_instance(pid, asset_id, x, y, z), do: GenServer.cast(pid, {:instance, asset_id, x, y, z})
+  def send_instance(pid, asset_id, x, y, z),
+    do: GenServer.cast(pid, {:instance, asset_id, x, y, z})
 
   @spec stop(pid()) :: :ok
   def stop(pid), do: GenServer.stop(pid, :normal)
@@ -167,14 +168,11 @@ defmodule ZoneConsole.ZoneClient do
     <<xu::little-32>> = <<tx::little-float-32>>
     <<yu::little-32>> = <<ty::little-float-32>>
     <<zu::little-32>> = <<tz::little-float-32>>
-    <<player_id::little-32,
-      sx::little-float-64, sy::little-float-64, sz::little-float-64,
-      0::little-16, 0::little-16, 0::little-16,
-      0::little-16, 0::little-16, 0::little-16,
-      0::little-32,
-      4::little-32, id_hi::little-32, id_lo::little-32,
-      xu::little-32, yu::little-32, zu::little-32,
-      0::256>>
+
+    <<player_id::little-32, sx::little-float-64, sy::little-float-64, sz::little-float-64,
+      0::little-16, 0::little-16, 0::little-16, 0::little-16, 0::little-16, 0::little-16,
+      0::little-32, 4::little-32, id_hi::little-32, id_lo::little-32, xu::little-32,
+      yu::little-32, zu::little-32, 0::256>>
   end
 
   # Build 100-byte player packet. cmd is payload[0] low byte (0=heartbeat, 2=nudge).

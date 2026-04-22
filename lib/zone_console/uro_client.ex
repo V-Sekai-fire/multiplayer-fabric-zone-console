@@ -21,11 +21,13 @@ defmodule ZoneConsole.UroClient do
            receive_timeout: 10_000
          ) do
       {:ok, %{status: 200, body: %{"data" => data}}} ->
-        {:ok, %{client |
-          access_token: data["access_token"],
-          user: data["user"],
-          expires_in: data["expires_in"] || 3600
-        }}
+        {:ok,
+         %{
+           client
+           | access_token: data["access_token"],
+             user: data["user"],
+             expires_in: data["expires_in"] || 3600
+         }}
 
       {:ok, %{status: status, body: body}} ->
         {:error, "HTTP #{status}: #{inspect(body)}"}

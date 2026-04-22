@@ -4,9 +4,13 @@ defmodule ZoneConsole.ZoneLifecycleTest do
   defp authed_client do
     ZoneConsole.UroClient.new(System.fetch_env!("URO_BASE_URL"))
     |> then(fn c ->
-      {:ok, a} = ZoneConsole.UroClient.login(c,
-        System.fetch_env!("URO_EMAIL"),
-        System.fetch_env!("URO_PASSWORD"))
+      {:ok, a} =
+        ZoneConsole.UroClient.login(
+          c,
+          System.fetch_env!("URO_EMAIL"),
+          System.fetch_env!("URO_PASSWORD")
+        )
+
       a
     end)
   end
@@ -24,8 +28,10 @@ defmodule ZoneConsole.ZoneLifecycleTest do
     Enum.each(shards, fn shard ->
       assert is_binary(shard["address"] || shard[:address]),
              "shard must have address"
+
       assert is_integer(shard["port"] || shard[:port]),
              "shard must have integer port"
+
       assert is_binary(shard["cert_hash"] || shard[:cert_hash]),
              "shard must have cert_hash"
     end)

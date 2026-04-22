@@ -552,7 +552,11 @@ defmodule ZoneConsole.App do
              {z, ""} <- Float.parse(z_str) do
           if state.zone_client do
             ZoneClient.send_instance(state.zone_client, id, x, y, z)
-            append(state, line(:ok, "Instance request sent for asset #{id} at (#{x}, #{y}, #{z})"))
+
+            append(
+              state,
+              line(:ok, "Instance request sent for asset #{id} at (#{x}, #{y}, #{z})")
+            )
           else
             append(state, line(:warn, "Not joined to a zone. Run 'join' first."))
           end

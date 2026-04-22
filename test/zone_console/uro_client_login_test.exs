@@ -16,7 +16,7 @@ defmodule ZoneConsole.UroClientLoginTest do
   @tag :prod
   test "login returns bearer token from prod uro" do
     base_url = System.fetch_env!("URO_BASE_URL")
-    email    = System.fetch_env!("URO_EMAIL")
+    email = System.fetch_env!("URO_EMAIL")
     password = System.fetch_env!("URO_PASSWORD")
 
     client = ZoneConsole.UroClient.new(base_url)
@@ -35,6 +35,6 @@ defmodule ZoneConsole.UroClientLoginTest do
     result = ZoneConsole.UroClient.login(client, "nobody@example.com", "wrong")
 
     assert match?({:error, _}, result),
-      "bad credentials must return {:error, _} not raise"
+           "bad credentials must return {:error, _} not raise"
   end
 end

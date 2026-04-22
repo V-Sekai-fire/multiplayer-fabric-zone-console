@@ -2,15 +2,16 @@ defmodule ZoneConsole.MultiPlatformTest do
   use ExUnit.Case, async: false
   import Bitwise
 
-  @platform case :os.type() do
+  @platform case(:os.type()) do
     {:unix, :darwin} -> :macos
-    {:unix, :linux}  -> :linux
-    {:win32, :nt}    -> :windows
+    {:unix, :linux} -> :linux
+    {:win32, :nt} -> :windows
   end
 
   # Accepts both decimal strings and UUID strings.
   defp parse_asset_id(str) do
     clean = String.replace(str, "-", "")
+
     if String.match?(clean, ~r/^[0-9]+$/) do
       String.to_integer(clean)
     else
@@ -20,8 +21,8 @@ defmodule ZoneConsole.MultiPlatformTest do
 
   @tag :prod
   test "zone_console connects and instances on #{@platform}" do
-    url      = System.fetch_env!("ZONE_SERVER_URL")
-    pin      = System.fetch_env!("ZONE_CERT_PIN")
+    url = System.fetch_env!("ZONE_SERVER_URL")
+    pin = System.fetch_env!("ZONE_CERT_PIN")
     asset_id = parse_asset_id(System.fetch_env!("TEST_ASSET_ID"))
 
     {:ok, zc} = ZoneConsole.ZoneClient.start_link(url, pin, 1, self())
@@ -40,9 +41,12 @@ defmodule ZoneConsole.MultiPlatformTest do
     asset_id = System.fetch_env!("TEST_ASSET_ID")
 
     {:ok, ax_tree} = ZoneConsole.AccessKit.get_tree(@platform)
-    node = Enum.find(ax_tree[:nodes] || [], fn n ->
-      n[:label] == asset_id or n["label"] == asset_id
-    end)
+
+    node =
+      Enum.find(ax_tree[:nodes] || [], fn n ->
+        n[:label] == asset_id or n["label"] == asset_id
+      end)
+
     assert node != nil, "#{@platform}: instanced node must appear in AccessKit tree"
     assert node[:accessible] == true or node["accessible"] == true
   end

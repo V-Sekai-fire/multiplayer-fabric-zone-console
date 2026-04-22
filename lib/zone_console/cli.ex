@@ -89,13 +89,21 @@ defmodule ZoneConsole.CLI do
     case System.cmd(
            "openssl",
            [
-             "req", "-x509", "-newkey", "ec",
-             "-pkeyopt", "ec_paramgen_curve:P-256",
-             "-keyout", key_file(),
-             "-out", cert_file(),
-             "-days", to_string(valid_days),
+             "req",
+             "-x509",
+             "-newkey",
+             "ec",
+             "-pkeyopt",
+             "ec_paramgen_curve:P-256",
+             "-keyout",
+             key_file(),
+             "-out",
+             cert_file(),
+             "-days",
+             to_string(valid_days),
              "-nodes",
-             "-subj", "/CN=zone_console"
+             "-subj",
+             "/CN=zone_console"
            ],
            stderr_to_stdout: true
          ) do

@@ -12,10 +12,10 @@ defmodule ZoneConsole.AccessKit do
   @spec get_tree(:macos | :linux | :windows) :: {:ok, map()} | {:error, term()}
   def get_tree(platform) do
     case platform do
-      :macos   -> get_tree_impl(:macos)
-      :linux   -> get_tree_impl(:linux)
+      :macos -> get_tree_impl(:macos)
+      :linux -> get_tree_impl(:linux)
       :windows -> get_tree_impl(:windows)
-      other    -> {:error, {:unsupported_platform, other}}
+      other -> {:error, {:unsupported_platform, other}}
     end
   end
 
