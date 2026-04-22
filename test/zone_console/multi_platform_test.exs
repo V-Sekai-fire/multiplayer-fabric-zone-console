@@ -2,11 +2,11 @@ defmodule ZoneConsole.MultiPlatformTest do
   use ExUnit.Case, async: false
   import Bitwise
 
-  @platform case(:os.type()) do
-    {:unix, :darwin} -> :macos
-    {:unix, :linux} -> :linux
-    {:win32, :nt} -> :windows
-  end
+  @platform (case :os.type() do
+               {:unix, :darwin} -> :macos
+               {:unix, :linux} -> :linux
+               {:win32, :nt} -> :windows
+             end)
 
   # Accepts both decimal strings and UUID strings.
   defp parse_asset_id(str) do
