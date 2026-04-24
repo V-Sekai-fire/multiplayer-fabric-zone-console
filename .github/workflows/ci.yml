@@ -58,4 +58,5 @@ jobs:
       - name: Run tests
         # Tests use ZoneConsole.Keychain.Mock (ETS) — no OS keychain needed.
         # PropCheck runs 100 cases per property by default.
-        run: mix test --trace
+        # :prod tests require live URO_BASE_URL / ZONE_SERVER_URL — excluded in CI.
+        run: mix test --exclude prod --trace
