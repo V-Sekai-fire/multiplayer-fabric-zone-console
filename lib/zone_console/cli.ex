@@ -13,7 +13,7 @@ defmodule ZoneConsole.CLI do
     uro_url =
       Enum.at(args, 0) ||
         System.get_env("URO_URL") ||
-        "http://localhost:4000"
+        "http://localhost:8888"
 
     IO.puts("Uro: #{uro_url}")
 

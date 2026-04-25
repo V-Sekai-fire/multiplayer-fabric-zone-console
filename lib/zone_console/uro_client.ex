@@ -1,6 +1,8 @@
 defmodule ZoneConsole.UroClient do
   @moduledoc "Thin REST client for Uro auth + shard management."
 
+  @api_prefix "/api/v1"
+
   defstruct [:base_url, :access_token, :user, expires_in: 3600]
 
   @type t :: %__MODULE__{
@@ -16,7 +18,7 @@ defmodule ZoneConsole.UroClient do
   def login(%__MODULE__{} = client, username_or_email, password) do
     cred_key = if String.contains?(username_or_email, "@"), do: :email, else: :username
 
-    case Req.post("#{client.base_url}/session",
+    case Req.post("#{client.base_url}#{@api_prefix}/session",
            json: %{user: %{cred_key => username_or_email, password: password}},
            receive_timeout: 10_000
          ) do
@@ -39,7 +41,7 @@ defmodule ZoneConsole.UroClient do
 
   @doc "GET /shards — returns {:ok, [shard]} or {:error, reason}."
   def list_shards(%__MODULE__{} = client) do
-    case Req.get("#{client.base_url}/shards",
+    case Req.get("#{client.base_url}#{@api_prefix}/shards",
            headers: auth_headers(client),
            receive_timeout: 10_000
          ) do
@@ -56,7 +58,7 @@ defmodule ZoneConsole.UroClient do
 
   @doc "POST /shards — register a new shard. Returns {:ok, id} or {:error, reason}."
   def register_shard(%__MODULE__{} = client, address, port, map, name) do
-    case Req.post("#{client.base_url}/shards",
+    case Req.post("#{client.base_url}#{@api_prefix}/shards",
            json: %{shard: %{address: address, port: port, map: map, name: name}},
            headers: auth_headers(client),
            receive_timeout: 10_000
@@ -74,7 +76,7 @@ defmodule ZoneConsole.UroClient do
 
   @doc "DELETE /shards/:id — unregister a shard. Returns :ok or {:error, reason}."
   def delete_shard(%__MODULE__{} = client, id) do
-    case Req.delete("#{client.base_url}/shards/#{id}",
+    case Req.delete("#{client.base_url}#{@api_prefix}/shards/#{id}",
            headers: auth_headers(client),
            receive_timeout: 10_000
          ) do
@@ -91,7 +93,7 @@ defmodule ZoneConsole.UroClient do
 
   @doc "PUT /shards/:id — heartbeat keepalive for a shard. Returns :ok or {:error, reason}."
   def heartbeat_shard(%__MODULE__{} = client, id) do
-    case Req.put("#{client.base_url}/shards/#{id}",
+    case Req.put("#{client.base_url}#{@api_prefix}/shards/#{id}",
            json: %{},
            headers: auth_headers(client),
            receive_timeout: 10_000
@@ -111,8 +113,8 @@ defmodule ZoneConsole.UroClient do
   def list_zones(%__MODULE__{} = client, shard_id \\ nil) do
     url =
       if shard_id,
-        do: "#{client.base_url}/zones?shard_id=#{shard_id}",
-        else: "#{client.base_url}/zones"
+        do: "#{client.base_url}#{@api_prefix}/zones?shard_id=#{shard_id}",
+        else: "#{client.base_url}#{@api_prefix}/zones"
 
     case Req.get(url, headers: auth_headers(client), receive_timeout: 10_000) do
       {:ok, %{status: 200, body: %{"data" => %{"zones" => zones}}}} ->
@@ -128,7 +130,7 @@ defmodule ZoneConsole.UroClient do
 
   @doc "POST /zones — spawn a zone process. Returns {:ok, map} or {:error, reason}."
   def spawn_zone(%__MODULE__{} = client, shard_id, port) do
-    case Req.post("#{client.base_url}/zones",
+    case Req.post("#{client.base_url}#{@api_prefix}/zones",
            json: %{shard_id: shard_id, port: port},
            headers: auth_headers(client),
            receive_timeout: 10_000
@@ -146,7 +148,7 @@ defmodule ZoneConsole.UroClient do
 
   @doc "DELETE /zones/:shard_id/:port — stop a zone process. Returns :ok or {:error, reason}."
   def stop_zone(%__MODULE__{} = client, shard_id, port) do
-    case Req.delete("#{client.base_url}/zones/#{shard_id}/#{port}",
+    case Req.delete("#{client.base_url}#{@api_prefix}/zones/#{shard_id}/#{port}",
            headers: auth_headers(client),
            receive_timeout: 10_000
          ) do
@@ -163,7 +165,7 @@ defmodule ZoneConsole.UroClient do
 
   @doc "GET /session — verify a cached token. Returns {:ok, client} or {:error, reason}."
   def current_user(%__MODULE__{} = client) do
-    case Req.get("#{client.base_url}/session",
+    case Req.get("#{client.base_url}#{@api_prefix}/session",
            headers: auth_headers(client),
            receive_timeout: 10_000
          ) do
@@ -182,7 +184,7 @@ defmodule ZoneConsole.UroClient do
   def upload_asset(%__MODULE__{} = client, path, name) do
     case AriaStorage.process_file(path, backend: :s3) do
       {:ok, %{chunks: chunks, store_url: store_url}} ->
-        case Req.post("#{client.base_url}/storage",
+        case Req.post("#{client.base_url}#{@api_prefix}/storage",
                json: %{name: name, chunks: chunks, store_url: store_url},
                headers: auth_headers(client),
                receive_timeout: 10_000
@@ -204,7 +206,7 @@ defmodule ZoneConsole.UroClient do
 
   @doc "POST /session/cert — register client cert hash with uro. Hash validity is tied to the OAuth token TTL. Returns :ok or {:error, reason}."
   def register_cert(%__MODULE__{} = client, cert_hash) do
-    case Req.post("#{client.base_url}/session/cert",
+    case Req.post("#{client.base_url}#{@api_prefix}/session/cert",
            json: %{cert_hash: cert_hash},
            headers: auth_headers(client),
            receive_timeout: 10_000
@@ -222,7 +224,7 @@ defmodule ZoneConsole.UroClient do
 
   @doc "POST /storage/:id/manifest - fetch a manifest for an uploaded asset. Returns {:ok, %{store_url: _, chunks: [_|_]}} or {:error, reason}."
   def get_manifest(%__MODULE__{} = client, id) do
-    case Req.post("#{client.base_url}/storage/#{id}/manifest",
+    case Req.post("#{client.base_url}#{@api_prefix}/storage/#{id}/manifest",
            headers: auth_headers(client),
            receive_timeout: 10_000
          ) do
