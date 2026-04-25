@@ -20,6 +20,7 @@ defmodule ZoneConsole.App do
     {"start <port>", "spawn a Godot zone on the connected shard"},
     {"stop <port>", "stop a running zone on the connected shard"},
     {"zones", "list running zones for connected shard"},
+    {"direct <host> <port> <cert_hash>", "connect directly to a zone server (observer mode)"},
     {"join [index]", "join a zone as a player over WebTransport"},
     {"leave", "disconnect from the current zone"},
     {"pos <x> <y> <z>", "set your in-zone position"},
@@ -376,6 +377,36 @@ defmodule ZoneConsole.App do
           append(state, line(:err, "Error: #{reason}"))
       end
     end)
+  end
+
+  defp run_command(state, "direct " <> args) do
+    case String.split(String.trim(args)) do
+      [host, port_str, cert_hash] ->
+        case Integer.parse(port_str) do
+          {port, ""} ->
+            if state.zone_client, do: ZoneClient.stop(state.zone_client)
+            url = "https://#{host}:#{port}/"
+
+            case ZoneClient.start_link(url, cert_hash, state.player_id, self()) do
+              {:ok, pid} ->
+                state = %{state | zone_client: pid, entities: %{}}
+
+                append(
+                  state,
+                  line(:ok, "Connected to #{url} (cert: #{String.slice(cert_hash, 0, 12)}…)")
+                )
+
+              {:error, reason} ->
+                append(state, line(:err, "Connect failed: #{reason}"))
+            end
+
+          _ ->
+            append(state, line(:err, "usage: direct <host> <port> <cert_hash>"))
+        end
+
+      _ ->
+        append(state, line(:err, "usage: direct <host> <port> <cert_hash>"))
+    end
   end
 
   defp run_command(state, "join" <> rest) do
