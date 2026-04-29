@@ -5,3 +5,4 @@ deps/
 vendor/*/native/*/target/
 native/*/target/
 priv/native/
+.DS_Store
